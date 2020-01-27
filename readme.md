@@ -51,6 +51,8 @@ STATISTICS_API_PORT=10044
 STATISTICS_API_HOST=0.0.0.0
 ```
 
+To change the port, you also need to change the EXPOSE value in the Dockerfile.
+
 # History Database
 ## How to use the database 
 You need something that can access the database info. I recommend using DBeaver (https://dbeaver.io)
