@@ -24,7 +24,7 @@ docker-compose up -d
 
 ### Command line
 ```shell script
-docker run -d --env-file=deploy.env --restart=unless-stopped --name conn_monitor -it raccoon_conn_monitor:latest
+docker run -d --env-file=deploy.env -p 10044:10044 --restart=unless-stopped --name conn_monitor -it raccoon_conn_monitor:latest
 ```
 
 
