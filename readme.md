@@ -51,7 +51,9 @@ STATISTICS_API_PORT=10044
 STATISTICS_API_HOST=0.0.0.0
 ```
 
-To change the port, you also need to change the EXPOSE value in the Dockerfile.
+To change the port, you also need to:
+ 1. change the EXPOSE value in the Dockerfile.
+ 2. change both ports in the -p parameter in the run command. 
 
 # History Database
 ## How to use the database 
