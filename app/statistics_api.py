@@ -2,11 +2,12 @@
 import threading
 
 import flask
-from flask import jsonify, make_response
+import requests
+from flask import jsonify, make_response, request
 
 from config import STATISTICS_API_PORT, STATISTICS_API_HOST
 from conn_monitor_logger import HistoryLogger
-from utils import calc_downtime
+from utils import calc_downtime, import_from_url
 
 
 def _make_summary_(rows):
@@ -26,7 +27,12 @@ def _make_summary_(rows):
     return summary
 
 
-api = flask.Blueprint("statistics_api", "api_blueprint", url_prefix="/api/v1")
+def _get_events_(correlation_id):
+    with HistoryLogger() as statistics_database:
+        return statistics_database.get_events(correlation_id=correlation_id)
+
+
+api = flask.Blueprint("statistics_api", "api_blueprint", url_prefix="/api/v1/statistics")
 web_helper = flask.Flask("statistics_web")
 
 
@@ -35,20 +41,29 @@ def route_home():
     return "home", 200
 
 
-@api.route("/statistics", defaults={"correlation_id": None})
-@api.route("/statistics/<correlation_id>")
+@api.route("/", methods=["POST", ])
+def route_api_import():
+    form = request.get_json(force=True)
+    url = form.get("url")
+    if url:
+        imported_rows = import_from_url(url=url)
+        return make_response({"imported_rows": imported_rows}, 201)
+
+    return "", 204
+
+
+@api.route("/", defaults={"correlation_id": None}, methods=["GET", ])
+@api.route("/<correlation_id>", methods=["GET", ])
 def route_api_general(correlation_id):
-    rows = list()
-    with HistoryLogger() as statistics_database:
-        rows = statistics_database.get_events(correlation_id=correlation_id)
+    rows = _get_events_(correlation_id=correlation_id)
+    return ("", 204) if len(rows) == 0 else jsonify(rows)
 
-    if len(rows) == 0:
-        return make_response(jsonify(list()), 204)
 
-    if flask.request.args.get("show", "").lower().strip() == "summary":
-        return jsonify(_make_summary_(rows=rows))
-
-    return jsonify(rows)
+@api.route("/summary", defaults={"correlation_id": None})
+@api.route("/<correlation_id>/summary")
+def route_api_summary(correlation_id):
+    rows = _get_events_(correlation_id=correlation_id)
+    return ("", 204) if len(rows) == 0 else jsonify(_make_summary_(rows=rows))
 
 
 web_helper.register_blueprint(api)

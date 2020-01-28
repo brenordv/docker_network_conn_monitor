@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
 import sqlite3
+from dateutil.parser import parse
 
 from config import DATABASE_FILE
 
@@ -66,31 +67,57 @@ class HistoryLogger:
         self.commit_and_close(cursor)
         return True
 
-    def log_event(self, correlation_id, event, url, status_code, error_msg):
+    def _prepare_payload_to_insert_(self, **kwargs):
+        payload = dict()
+        for key, value in kwargs.items():
+            payload[key] = value
+
+        cols = list()
+        values = list()
+
+        for key, value in payload.items():
+            cols.append(key)
+            values.append(value)
+
+        return {
+            "payload": payload,
+            "cols": ", ".join(cols),
+            "values": values,
+            "place_holders": ", ".join(["?" for c in cols])
+        }
+
+    def log_event(self, correlation_id, event, url, status_code, error_message, **kwargs):
         try:
             cursor = self.db().cursor()
+            payload = self._prepare_payload_to_insert_(correlation_id=correlation_id,
+                                                       event=event,
+                                                       url=url,
+                                                       status_code=status_code,
+                                                       error_message=error_message,
+                                                       **kwargs)
 
-            cursor.execute("INSERT INTO connection_history (correlation_id, event, url, status_code, error_message) "
-                           "VALUES(?, ?, ?, ?, ?)", (correlation_id, event, url, status_code, error_msg))
+            cursor.execute(f"INSERT INTO connection_history ({payload['cols']}) VALUES({payload['place_holders']})",
+                           payload['values'])
+
             self.commit_and_close(cursor)
             return True
         except Exception as e:
             print(f"Error trying to save log!\nCorrelation Id: {correlation_id}\tEvent: {event}\n"
-                  f"Url: {url}\tStatus Code: {status_code}\nError: {error_msg}\n{str(e)}")
+                  f"Url: {url}\tStatus Code: {status_code}\nError: {error_message}\n{str(e)}")
 
         return False
 
     def log_downtime(self, correlation_id, url, status_code=None, error_msg=None):
         return self.log_event(correlation_id=correlation_id, event="disconnected",
-                              url=url, status_code=status_code, error_msg=error_msg)
+                              url=url, status_code=status_code, error_message=error_msg)
 
     def log_uptime(self, correlation_id, url, status_code=None, error_msg=None):
         return self.log_event(correlation_id=correlation_id, event="connected",
-                              url=url, status_code=status_code, error_msg=error_msg)
+                              url=url, status_code=status_code, error_message=error_msg)
 
     def log_exception(self, correlation_id, url, status_code=None, error_msg=None):
         return self.log_event(correlation_id=correlation_id, event="exception",
-                              url=url, status_code=status_code, error_msg=error_msg)
+                              url=url, status_code=status_code, error_message=error_msg)
 
     def get_events(self, correlation_id=None):
         try:
@@ -105,7 +132,7 @@ class HistoryLogger:
             for row in rows:
                 if "event_timestamp" not in row:
                     continue
-                row["event_timestamp"] = datetime.strptime(row["event_timestamp"], "%Y-%m-%d %H:%M:%S")
+                row["event_timestamp"] = parse(row["event_timestamp"])
 
             return rows
         except Exception as e:

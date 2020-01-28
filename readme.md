@@ -1,3 +1,17 @@
+# What is this thing and how does it work?
+This is a simple application that monitors your internet connection and logs the downtime.
+It works by sending regular get requests to a few sites. 
+If the request is through (no matter if the site is up or not), your internet is working. 
+If there's an exception or timeout, your internet is down.
+
+I bet there's more elegant ways to do this, but this is good enough.
+
+If the variables TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID are set, you'll receive a message in your Telegram when your
+internet is back up.
+
+There's also an API that shows you the current info. 
+
+
 # How to use
 You need to install Docker on your machine, in a raspberry or in some machine that wil lbe connected to the internet.
 
@@ -45,15 +59,17 @@ SECONDS_BETWEEN_CHECKS=60
 
 ## Changing host and port for the info api
 The default host is **0.0.0.0** and the default port is **10044**.
-Edit the ```deploy.env``` and add/change the following lines:
+Edit the ```deploy.env``` and add/change the following line:
 ```shell script
-STATISTICS_API_PORT=10044
 STATISTICS_API_HOST=0.0.0.0
 ```
 
 To change the port, you also need to:
  1. change the EXPOSE value in the Dockerfile.
- 2. change both ports in the -p parameter in the run command. 
+ 2. change the port in the -p parameter in the run command.
+ or
+ 3. change the port in the docker-compose file.
+
 
 # History Database
 ## How to use the database 
@@ -90,28 +106,44 @@ select
     from connection_history ch;
 ```
 
-# API routes
+# Information API
 (Considering default host and ports. Change accordinly)
 
 ## Home
-```flaskurlpath
-https://localhost:10044/
+```api
+[GET] http://localhost:10044
 ```
 Not yet implemented... 
 Theoretically, will show a dashboard with all info.
 
 ## Getting all events
-```flaskurlpath
-https://localhost:10044/api/v1/statistics
+```api
+[GET] http://localhost:10044/api/v1/statistics
 ```
 
-## Getting all logs for a specific correlation_id
-```flaskurlpath
-https://localhost:10044/api/v1/statistics/<correlation_id>
+## Getting events for a specific correlation_id
+```api
+[GET] http://localhost:10044/api/v1/statistics/<correlation_id>
 ```
 
-## Showing summary with downtime.
-```flaskurlpath
-https://localhost:10044/api/v1/statistics?show=summary
-https://localhost:10044/api/v1/statistics/<correlation_id>?show=summary
+## Showing summary with downtime for every event.
+```api
+[GET] http://localhost:10044/api/v1/statistics/summary
+```
+
+## Showing summary with downtime for all events of a specific correlation_id
+```api
+[GET] http://localhost:10044/api/v1/statistics/<correlation_id>/summary
+```
+
+## Import events from another instance of the API
+```api
+[POST] http://localhost:10044/api/v1/statistics
+```
+
+**Post body:**
+```json
+{
+   "url": "http://another_host:10044/api/v1/statistics"
+}
 ```
