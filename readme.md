@@ -27,7 +27,6 @@ In the root directory of this project, run the command:
 ```shell script
 docker build -t raccoon_conn_monitor:latest .
 ```
-
 You can use the scripts ```build.bat``` or ```build.sh``` as a shortcut. 
 
 ## Running the application
@@ -106,6 +105,7 @@ select
     from connection_history ch;
 ```
 
+
 # Information API
 (Considering default host and ports. Change accordinly)
 
@@ -120,30 +120,55 @@ Theoretically, will show a dashboard with all info.
 ```api
 [GET] http://localhost:10044/api/v1/statistics
 ```
+#### Curl Example
+```shell script
+curl --request GET --url http://localhost:10044/api/v1/statistics
+```
 
 ## Getting events for a specific correlation_id
 ```api
 [GET] http://localhost:10044/api/v1/statistics/<correlation_id>
+```
+#### Curl Example
+```shell script
+curl --request GET --url http://localhost:10044/api/v1/statistics/30c993b3-0aae-48cb-a137-d5980b56269f
 ```
 
 ## Showing summary with downtime for every event.
 ```api
 [GET] http://localhost:10044/api/v1/statistics/summary
 ```
+#### Curl Example
+```shell script
+curl --request GET --url http://localhost:10044/api/v1/statistics/summary
+```
 
 ## Showing summary with downtime for all events of a specific correlation_id
 ```api
 [GET] http://localhost:10044/api/v1/statistics/<correlation_id>/summary
+```
+#### Curl Example
+```shell script
+curl --request GET --url http://localhost:10044/api/v1/statistics/30c993b3-0aae-48cb-a137-d5980b56269f/summary
 ```
 
 ## Import events from another instance of the API
 ```api
 [POST] http://localhost:10044/api/v1/statistics
 ```
-
-**Post body:**
+#### Post body
 ```json
 {
    "url": "http://another_host:10044/api/v1/statistics"
 }
+```
+
+#### Curl Example
+```shell script
+curl --request POST \
+  --url http://localhost:10044/api/v1/statistics \
+  --header 'content-type: application/json' \
+  --data '{
+	"url": "http://skyrasp4:10044/api/v1/statistics"
+}'
 ```
