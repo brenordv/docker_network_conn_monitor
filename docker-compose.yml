@@ -3,6 +3,6 @@ conn_monitor:
   image: raccoon_conn_monitor:latest
   restart: unless-stopped
   ports:
-    - 10044
+    - 10044:10044
   env_file:
     - ./deploy.env
