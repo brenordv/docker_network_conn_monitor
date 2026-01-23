@@ -1,3 +1,5 @@
+> Since I was not maintaining this tool, I archived it. However, if it was useful to you, I rebuilt it in Rust. You can find it here: https://github.com/brenordv/rusted-toolbox/tree/master/crates/tool-netquality
+
 # What is this thing and how does it work?
 This is a simple application that monitors your internet connection and logs the downtime.
 It works by sending regular get requests to a few sites. 
